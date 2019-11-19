@@ -30,12 +30,13 @@ class DecoderRNN(nn.Module):
         self.num_layers = num_layers
         resnet = models.resnet50(pretrained=True)
         
-        self.lstm = nn.LSTM(input_size=embed_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=True)
+        self.lstm = nn.LSTM(input_size=vocab_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=True)
         
         self.fc = nn.Linear(hidden_size, embed_size)
         self.embed = nn.Embedding(num_embeddings=vocab_size, embedding_dim=embed_size)
         
     def forward(self, features, captions):
+        captions = captions[:, :-1]
         embedded = self.embed(captions)
         embedded = torch.cat((features.unsqueeze(dim = 1), embedded), dim = 1)
         hidden, state = self.lstm(embedded)
@@ -58,7 +59,3 @@ class DecoderRNN(nn.Module):
         
         
         return predictions
-       
-            
-          
-        
