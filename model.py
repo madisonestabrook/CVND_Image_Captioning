@@ -30,18 +30,17 @@ class DecoderRNN(nn.Module):
         self.num_layers = num_layers
         resnet = models.resnet50(pretrained=True)
         
-        self.lstm = nn.LSTM(input_size=vocab_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=True)
-        
-        self.fc = nn.Linear(hidden_size, embed_size)
+        self.lstm = nn.LSTM(input_size=embed_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_size, vocab_size)
         self.embed = nn.Embedding(num_embeddings=vocab_size, embedding_dim=embed_size)
         
     def forward(self, features, captions):
         captions = captions[:, :-1]
         embedded = self.embed(captions)
         embedded = torch.cat((features.unsqueeze(dim = 1), embedded), dim = 1)
-        hidden, state = self.lstm(embedded)
+        lstm_out, state = self.lstm(embedded)
         
-        output = self.fc(hidden)
+        output = self.fc(lstm_out)
         
         return output
 
@@ -51,7 +50,7 @@ class DecoderRNN(nn.Module):
         embeddings = inputs
         
         for l in range(max_len):
-            hidden, state = self.lstm(inputs, states)
+            hidden, states = self.lstm(inputs, states)
             output = self.fc(hidden.squeeze(1))
             _, prediction = torch.max(output, 1)
             predictions.append(prediction.item())
@@ -59,3 +58,4 @@ class DecoderRNN(nn.Module):
         
         
         return predictions
+       
